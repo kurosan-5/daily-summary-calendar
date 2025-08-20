@@ -57,6 +57,10 @@ interface AppState {
   fetchEntries: (month: string) => Promise<void>;
   fetchEntryDetail: (date: string) => Promise<void>;
   saveEntry: (date: string, text: string, meals: { breakfast: boolean; lunch: boolean; dinner: boolean }) => Promise<void>;
+  updateEntry: (date: string, text: string) => Promise<void>;
+  updateSummary: (date: string, summary: string) => Promise<void>;
+  reEvaluateEntry: (date: string, text: string) => Promise<void>;
+  deleteEntry: (date: string) => Promise<void>;
   clearError: () => void;
   clearSuccessMessage: () => void;
 }
@@ -145,6 +149,113 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().fetchEntries(currentMonth.format('YYYY-MM'));
       
       set({ isLoading: false, successMessage: '記録を保存しました' });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Unknown error', isLoading: false });
+    }
+  },
+
+  updateEntry: async (date: string, text: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`${API_BASE_URL}/entries/${date}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': '00000000-0000-0000-0000-000000000000'
+        },
+        body: JSON.stringify({ raw_text: text })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update entry');
+      }
+      
+      set({ isLoading: false, successMessage: 'テキストを更新しました' });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Unknown error', isLoading: false });
+    }
+  },
+
+  updateSummary: async (date: string, summary: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`${API_BASE_URL}/entries/${date}/summary`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': '00000000-0000-0000-0000-000000000000'
+        },
+        body: JSON.stringify({ summary })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update summary');
+      }
+      
+      set({ isLoading: false, successMessage: '要約を更新しました' });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Unknown error', isLoading: false });
+    }
+  },
+
+  reEvaluateEntry: async (date: string, text: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      // まずテキストを更新
+      const updateResponse = await fetch(`${API_BASE_URL}/entries/${date}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': '00000000-0000-0000-0000-000000000000'
+        },
+        body: JSON.stringify({ raw_text: text })
+      });
+      
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update entry text');
+      }
+
+      // 次にAI再評価を実行
+      const reEvaluateResponse = await fetch(`${API_BASE_URL}/entries/${date}/re-evaluate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': '00000000-0000-0000-0000-000000000000'
+        }
+      });
+      
+      if (!reEvaluateResponse.ok) {
+        throw new Error('Failed to re-evaluate entry');
+      }
+      
+      // 再評価後に詳細を再取得
+      await get().fetchEntryDetail(date);
+      
+      set({ isLoading: false, successMessage: 'テキストを更新し、再評価しました' });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Unknown error', isLoading: false });
+    }
+  },
+
+  deleteEntry: async (date: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch(`${API_BASE_URL}/entries/${date}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': '00000000-0000-0000-0000-000000000000'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to delete entry');
+      }
+      
+      // 削除後に現在月のエントリを再取得
+      const currentMonth = get().currentMonth;
+      await get().fetchEntries(currentMonth.format('YYYY-MM'));
+      
+      set({ isLoading: false, successMessage: '記録を削除しました', entryDetail: null });
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Unknown error', isLoading: false });
     }

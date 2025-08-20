@@ -8,9 +8,10 @@ import {
   Collapse,
   IconButton,
   Alert,
-  Button
+  Button,
+  TextField
 } from '@mui/material';
-import { ExpandMore, ExpandLess, Restaurant, Place, Refresh, Add } from '@mui/icons-material';
+import { ExpandMore, ExpandLess, Restaurant, Place, Refresh, Add, Edit, Save, Cancel, Delete } from '@mui/icons-material';
 import { ScoreBadge } from './ScoreBadge';
 import { EntryComposer } from './EntryComposer';
 import { useAppStore } from '../store/appStore';
@@ -22,19 +23,57 @@ interface DayDetailProps {
 }
 
 export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
-  const { entryDetail, fetchEntryDetail, isLoading, saveEntry } = useAppStore();
+  const { entryDetail, fetchEntryDetail, isLoading, updateEntry, reEvaluateEntry, deleteEntry } = useAppStore();
   const [showOriginalText, setShowOriginalText] = React.useState(false);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
+  const [isEditingText, setIsEditingText] = React.useState(false);
+  const [editedText, setEditedText] = React.useState('');
   useEffect(() => {
     fetchEntryDetail(date);
   }, [date, fetchEntryDetail]);
 
+  // 元のテキストが変更されたら編集テキストも更新
+  useEffect(() => {
+    if (entryDetail?.entry?.raw_text) {
+      setEditedText(entryDetail.entry.raw_text);
+    }
+  }, [entryDetail?.entry?.raw_text]);
+
   const handleReEvaluate = async () => {
-    if (entryDetail?.entry) {
-      await saveEntry(date, entryDetail.entry.raw_text, entryDetail.entry.meals);
+    if (editedText.trim()) {
+      await reEvaluateEntry(date, editedText);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setIsEditingText(true);
+    setShowOriginalText(true); // 編集開始時に元のテキストを表示
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingText(false);
+    setEditedText(entryDetail?.entry?.raw_text || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (editedText.trim()) {
+      // DBでテキストを更新
+      await updateEntry(date, editedText);
+      setIsEditingText(false);
+      // 保存後に詳細を再取得
       await fetchEntryDetail(date);
     }
   };
+
+  const handleDeleteEntry = async () => {
+    if (window.confirm('この記録を削除しますか？')) {
+      await deleteEntry(date);
+      onClose(); // 削除後にモーダルを閉じる
+    }
+  };
+
+  // テキストが元の内容から変更されているかチェック
+  const isTextChanged = editedText !== entryDetail?.entry?.raw_text;
 
   if (isLoading) {
     return (
@@ -91,9 +130,20 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
           </Typography>
           {evaluation && <ScoreBadge score={evaluation.score} size="large" />}
         </Box>
-        <IconButton onClick={onClose}>
-          ×
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Button
+            size="small"
+            startIcon={<Delete />}
+            onClick={handleDeleteEntry}
+            variant="outlined"
+            color="error"
+          >
+            削除
+          </Button>
+          <IconButton onClick={onClose}>
+            ×
+          </IconButton>
+        </Box>
       </Box>
 
       {evaluation ? (
@@ -104,15 +154,26 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
               <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 'bold' }}>
                 AI要約
               </Typography>
-              <Button
-                size="small"
-                startIcon={<Refresh />}
-                onClick={handleReEvaluate}
-                disabled={isLoading}
-                variant="outlined"
-              >
-                再評価
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  size="small"
+                  startIcon={<Edit />}
+                  onClick={handleStartEdit}
+                  variant="outlined"
+                >
+                  編集
+                </Button>
+                <Button
+                  size="small"
+                  startIcon={<Refresh />}
+                  onClick={handleReEvaluate}
+                  disabled={isLoading}
+                  variant="outlined"
+                  color={isTextChanged ? "primary" : "inherit"}
+                >
+                  再評価
+                </Button>
+              </Box>
             </Box>
             <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
               {evaluation.summary}
@@ -215,9 +276,41 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
         </Box>
         <Collapse in={showOriginalText}>
           <Box sx={{ mt: 1, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
-            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-              {entry.raw_text}
-            </Typography>
+            {isEditingText ? (
+              <Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={6}
+                  value={editedText}
+                  onChange={(e) => setEditedText(e.target.value)}
+                  variant="outlined"
+                  sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                />
+                <Box sx={{ display: 'flex', gap: 1, mt: 2, justifyContent: 'flex-end' }}>
+                  <Button
+                    size="small"
+                    startIcon={<Save />}
+                    onClick={handleSaveEdit}
+                    variant="contained"
+                  >
+                    保存
+                  </Button>
+                  <Button
+                    size="small"
+                    startIcon={<Cancel />}
+                    onClick={handleCancelEdit}
+                    variant="outlined"
+                  >
+                    キャンセル
+                  </Button>
+                </Box>
+              </Box>
+            ) : (
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                {entry.raw_text}
+              </Typography>
+            )}
           </Box>
         </Collapse>
       </Box>
