@@ -9,7 +9,8 @@ import {
   IconButton,
   Alert,
   Button,
-  TextField
+  TextField,
+  useTheme
 } from '@mui/material';
 import { ExpandMore, ExpandLess, Restaurant, Place, Refresh, Add, Edit, Save, Cancel, Delete } from '@mui/icons-material';
 import { ScoreBadge } from './ScoreBadge';
@@ -23,6 +24,9 @@ interface DayDetailProps {
 }
 
 export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   const { entryDetail, fetchEntryDetail, isLoading, updateEntry, reEvaluateEntry, deleteEntry } = useAppStore();
   const [showOriginalText, setShowOriginalText] = React.useState(false);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
@@ -191,7 +195,13 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
                   icon={<Restaurant />}
                   label="朝食"
                   size="small"
-                  sx={{ backgroundColor: '#ff9800', color: 'white' }}
+                  sx={{ 
+                    backgroundColor: '#ff9800', 
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: '#e68900'
+                    }
+                  }}
                 />
               )}
               {entry.meals.lunch && (
@@ -199,7 +209,13 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
                   icon={<Restaurant />}
                   label="昼食"
                   size="small"
-                  sx={{ backgroundColor: '#4caf50', color: 'white' }}
+                  sx={{ 
+                    backgroundColor: '#4caf50', 
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: '#43a047'
+                    }
+                  }}
                 />
               )}
               {entry.meals.dinner && (
@@ -207,7 +223,13 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
                   icon={<Restaurant />}
                   label="夕食"
                   size="small"
-                  sx={{ backgroundColor: '#3f51b5', color: 'white' }}
+                  sx={{ 
+                    backgroundColor: '#3f51b5', 
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: '#3949ab'
+                    }
+                  }}
                 />
               )}
             </Box>
@@ -275,7 +297,13 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
           </IconButton>
         </Box>
         <Collapse in={showOriginalText}>
-          <Box sx={{ mt: 1, p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+          <Box sx={{ 
+            mt: 1, 
+            p: 2, 
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5', 
+            borderRadius: 1,
+            border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : 'none'
+          }}>
             {isEditingText ? (
               <Box>
                 <TextField
@@ -285,7 +313,18 @@ export const DayDetail: React.FC<DayDetailProps> = ({ date, onClose }) => {
                   value={editedText}
                   onChange={(e) => setEditedText(e.target.value)}
                   variant="outlined"
-                  sx={{ backgroundColor: 'white', borderRadius: 1 }}
+                  sx={{ 
+                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'white', 
+                    borderRadius: 1,
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.23)' : undefined,
+                      },
+                      '&:hover fieldset': {
+                        borderColor: isDark ? 'rgba(255, 255, 255, 0.4)' : undefined,
+                      },
+                    }
+                  }}
                 />
                 <Box sx={{ display: 'flex', gap: 1, mt: 2, justifyContent: 'flex-end' }}>
                   <Button

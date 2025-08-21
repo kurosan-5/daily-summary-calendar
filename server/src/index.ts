@@ -37,10 +37,33 @@ async function testSupabaseConnection() {
 
 // Middleware
 app.use(helmet());
+
+// CORS configuration for multiple environments
+const allowedOrigins = [
+  'http://localhost:5173',  // ローカル開発環境
+  'http://localhost:3000',  // 代替ローカル環境
+  process.env.FRONTEND_URL, // 本番環境のフロントエンドURL
+  // 複数のドメインを追加可能
+  // 'https://yourdomain.vercel.app',
+  // 'https://yourdomain.netlify.app'
+].filter(Boolean); // undefinedを除外
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true
+  origin: function (origin, callback) {
+    // モバイルアプリや同一サーバーからのリクエストの場合、originがundefinedになることがある
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id']
 }));
+
 app.use(express.json({ limit: '10mb' }));
 
 // Rate limiting

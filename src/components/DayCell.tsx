@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, useTheme } from '@mui/material';
 import { getScoreColor } from '../utils/colors';
 import { ScoreBadge } from './ScoreBadge';
 import type { Entry } from '../store/appStore';
@@ -14,16 +14,19 @@ export interface DayCellProps {
 }
 
 export const DayCell: React.FC<DayCellProps> = ({ day, entry, isToday, onClick }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   // エントリーからスコアを取得（月別取得時に既に評価スコアが含まれている）
   const score = entry?.score || null;
-  const backgroundColor = score ? getScoreColor(score) : '#f9f9f9';
+  const backgroundColor = score ? getScoreColor(score, isDark) : 'transparent';
   return (
     <Paper
       elevation={isToday ? 3 : 1}
       sx={{
         height: 80,
         cursor: 'pointer',
-        backgroundColor,
+        backgroundColor: score ? backgroundColor : (theme) => theme.palette.background.default,
         display: 'flex',
         flexDirection: 'column',
         padding: 1,

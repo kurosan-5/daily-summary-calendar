@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, useTheme } from '@mui/material';
 import { Dayjs } from 'dayjs';
 import type { Entry } from '../store/appStore';
 
@@ -9,6 +9,9 @@ interface MonthHeatmapProps {
 }
 
 export const MonthHeatmap: React.FC<MonthHeatmapProps> = ({ entries, month }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   const endOfMonth = month.endOf('month');
   const daysInMonth = endOfMonth.date();
   const firstDayOfMonth = month.startOf('month');
@@ -20,14 +23,24 @@ export const MonthHeatmap: React.FC<MonthHeatmapProps> = ({ entries, month }) =>
     return entry?.went_out_level || 0;
   };
 
-  const getIntensityColor = (intensity: number): string => {
-    const colors = [
+  const getIntensityColor = (intensity: number, isDark: boolean = false): string => {
+    if (isDark) {
+      const darkColors = [
+        'rgba(255, 255, 255, 0.1)', // 0: 屋内 - ダークモード用
+        '#4a6741', // 1: 近所 - ダークモード用
+        '#5d7c55', // 2: 複数外出 - ダークモード用
+        '#7a9871'  // 3: 長距離/多拠点 - ダークモード用
+      ];
+      return darkColors[intensity] || darkColors[0];
+    }
+    
+    const lightColors = [
       '#f0f0f0', // 0: 屋内
       '#c6e48b', // 1: 近所
       '#7bc96f', // 2: 複数外出
       '#239a3b'  // 3: 長距離/多拠点
     ];
-    return colors[intensity] || colors[0];
+    return lightColors[intensity] || lightColors[0];
   };
 
   // Create 7x6 grid (42 cells) to fit 31 days in calendar format
@@ -41,8 +54,8 @@ export const MonthHeatmap: React.FC<MonthHeatmapProps> = ({ entries, month }) =>
         sx={{
           width: '100%',
           height: '100%',
-          backgroundColor: '#f9f9f9',
-          border: '1px solid #e0e0e0'
+          backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f9f9f9',
+          border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e0e0e0'}`
         }}
       />
     );
@@ -57,13 +70,14 @@ export const MonthHeatmap: React.FC<MonthHeatmapProps> = ({ entries, month }) =>
         sx={{
           width: '100%',
           height: '100%',
-          backgroundColor: getIntensityColor(intensity),
-          border: '1px solid #e0e0e0',
+          backgroundColor: getIntensityColor(intensity, isDark),
+          border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e0e0e0'}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: '0.7rem',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          color: (theme) => theme.palette.text.primary
         }}
       >
         {day}
@@ -80,8 +94,8 @@ export const MonthHeatmap: React.FC<MonthHeatmapProps> = ({ entries, month }) =>
         sx={{
           width: '100%',
           height: '100%',
-          backgroundColor: '#f9f9f9',
-          border: '1px solid #e0e0e0'
+          backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f9f9f9',
+          border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e0e0e0'}`
         }}
       />
     );
@@ -132,13 +146,33 @@ export const MonthHeatmap: React.FC<MonthHeatmapProps> = ({ entries, month }) =>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mt: 2, gap: 2 }}>
         <Typography variant="caption">外出度:</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box sx={{ width: 12, height: 12, backgroundColor: '#f0f0f0', border: '1px solid #e0e0e0' }} />
+          <Box sx={{ 
+            width: 12, 
+            height: 12, 
+            backgroundColor: getIntensityColor(0, isDark), 
+            border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e0e0e0'}`
+          }} />
           <Typography variant="caption">屋内</Typography>
-          <Box sx={{ width: 12, height: 12, backgroundColor: '#c6e48b', border: '1px solid #e0e0e0' }} />
+          <Box sx={{ 
+            width: 12, 
+            height: 12, 
+            backgroundColor: getIntensityColor(1, isDark), 
+            border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e0e0e0'}`
+          }} />
           <Typography variant="caption">近所</Typography>
-          <Box sx={{ width: 12, height: 12, backgroundColor: '#7bc96f', border: '1px solid #e0e0e0' }} />
+          <Box sx={{ 
+            width: 12, 
+            height: 12, 
+            backgroundColor: getIntensityColor(2, isDark), 
+            border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e0e0e0'}`
+          }} />
           <Typography variant="caption">複数</Typography>
-          <Box sx={{ width: 12, height: 12, backgroundColor: '#239a3b', border: '1px solid #e0e0e0' }} />
+          <Box sx={{ 
+            width: 12, 
+            height: 12, 
+            backgroundColor: getIntensityColor(3, isDark), 
+            border: (theme) => `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : '#e0e0e0'}`
+          }} />
           <Typography variant="caption">多拠点</Typography>
         </Box>
       </Box>

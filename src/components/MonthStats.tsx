@@ -3,7 +3,8 @@ import {
   Box, 
   Paper, 
   Typography, 
-  Chip
+  Chip,
+  useTheme
 } from '@mui/material';
 import { 
   TrendingUp, 
@@ -20,6 +21,9 @@ interface MonthStatsProps {
 }
 
 export const MonthStats: React.FC<MonthStatsProps> = ({ entries, month }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   const validEntries = entries.filter(entry => entry.score !== null);
   
   // Calculate statistics
@@ -61,7 +65,7 @@ export const MonthStats: React.FC<MonthStatsProps> = ({ entries, month }) => {
                 width: 20, 
                 height: 20, 
                 borderRadius: '50%', 
-                backgroundColor: getScoreColor(Math.round(avgScore)),
+                backgroundColor: getScoreColor(Math.round(avgScore), isDark),
                 margin: '0 auto',
                 mt: 1
               }} 

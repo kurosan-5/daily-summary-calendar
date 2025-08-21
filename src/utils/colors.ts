@@ -1,8 +1,25 @@
-export const getScoreColor = (score: number | null): string => {
-  if (score === null) return '#f5f5f5';
+export const getScoreColor = (score: number | null, isDark: boolean = false): string => {
+  if (score === null) return isDark ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5';
   
-  // スコア別の色設定
-  const scoreColors: { [key: number]: string } = {
+  if (isDark) {
+    // ダークモード用の色設定
+    const darkScoreColors: { [key: number]: string } = {
+      1: '#424242',   // 地味なダークグレー
+      2: '#565656',   // 少し明るいダークグレー
+      3: '#7d6b47',   // 地味なダークベージュ
+      4: '#8d7a5c',   // 明るめのダークベージュ
+      5: '#4a6fa5',   // ダーク水色
+      6: '#5ab894ff',   // ダーク薄緑
+      7: '#d6a017ff',   // ダーク金色
+      8: '#d47c00ff',   // ダークオレンジ
+      9: '#a512e4ff',   // ダーク紫
+      10: '#ffba0bff'   // ダークゴールド
+    };
+    return darkScoreColors[Math.round(score)] || (isDark ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5');
+  }
+  
+  // ライトモード用の色設定（既存）
+  const lightScoreColors: { [key: number]: string } = {
     1: '#8d8d8d',   // 地味なグレー
     2: '#a5a5a5',   // 少し明るいグレー
     3: '#c4a17a',   // 地味なベージュ
@@ -15,13 +32,18 @@ export const getScoreColor = (score: number | null): string => {
     10: '#d4af37'   // 高級感のあるゴールド
   };
   
-  return scoreColors[Math.round(score)] || '#f5f5f5';
+  return lightScoreColors[Math.round(score)] || '#f5f5f5';
 };
 
-export const getScoreTextColor = (score: number | null): string => {
-  if (score === null) return '#666';
+export const getScoreTextColor = (score: number | null, isDark: boolean = false): string => {
+  if (score === null) return isDark ? '#fff' : '#666';
   
-  // 暗い背景色や豪華な色に対して白文字、明るい色に対して黒文字
+  if (isDark) {
+    // ダークモードでは基本的に白文字
+    return '#fff';
+  }
+  
+  // ライトモードでの設定（既存）
   const whiteTextScores = [1, 2, 9]; // グレー系と紫
   return whiteTextScores.includes(Math.round(score)) ? '#fff' : '#000';
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import { getScoreColor } from '../utils/colors';
 
 interface ScoreBadgeProps {
@@ -8,6 +8,9 @@ interface ScoreBadgeProps {
 }
 
 export const ScoreBadge: React.FC<ScoreBadgeProps> = ({ score, size = 'medium' }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  
   if (score === null) return null;
 
   const sizeMap = {
@@ -24,15 +27,15 @@ export const ScoreBadge: React.FC<ScoreBadgeProps> = ({ score, size = 'medium' }
         width,
         height,
         borderRadius: '50%',
-        backgroundColor: 'white',
+        backgroundColor: isDark ? 'rgba(255, 255, 255, 0.9)' : 'white',
         color: "black",
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontWeight: 'bold',
         fontSize,
-        border: `2px solid ${getScoreColor(score)}`,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+        border: `2px solid ${getScoreColor(score, isDark)}`,
+        boxShadow: isDark ? '0 2px 4px rgba(0,0,0,0.5)' : '0 2px 4px rgba(0,0,0,0.2)'
       }}
     >
       {score}
